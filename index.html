@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magia Świąt – Oświetlenie i Dekoracje LED</title>
+    <style>
+        :root {
+            --bg-color: #fcfbf9;          
+            --card-bg: #ffffff;           
+            --accent: #d97706;            
+            --accent-hover: #b45309;      
+            --text-main: #1c1917;         
+            --text-muted: #78716c;        
+            --border: #e7e5e4;            
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            min-height: 100vh;
+            padding-bottom: 60px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #snow-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1;
+        }
+
+        .led-wire {
+            position: sticky; top: 0; width: 100%; height: 42px;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: flex-start;
+            z-index: 100; background: rgba(252, 251, 249, 0.92); backdrop-filter: blur(10px);
+            padding: 0 10px;
+        }
+
+        .light {
+            width: 11px; height: 16px;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: relative; transition: opacity 0.3s; opacity: 0.2;
+        }
+
+        .light::before {
+            content: ''; position: absolute; top: -4px; left: 3px;
+            width: 5px; height: 4px; background: #a8a29e; border-radius: 2px 2px 0 0;
+        }
+
+        body.led-on .light { opacity: 1; animation: pulse 1.6s infinite alternate ease-in-out; }
+        body.led-on .red { background: #ef4444; box-shadow: 0 0 12px #ef4444; animation-delay: 0s; }
+        body.led-on .gold { background: #f59e0b; box-shadow: 0 0 12px #f59e0b; animation-delay: 0.4s; }
+        body.led-on .green { background: #10b981; box-shadow: 0 0 12px #10b981; animation-delay: 0.8s; }
+        body.led-on .blue { background: #3b82f6; box-shadow: 0 0 12px #3b82f6; animation-delay: 1.2s; }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        header {
+            max-width: 1100px; margin: 20px auto 10px auto; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative; z-index: 10;
+        }
+
+        .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; color: var(--text-main); }
+        .logo span { color: var(--accent); }
+
+        .nav-controls { display: flex; gap: 10px; align-items: center; }
+
+        .btn-toggle {
+            background: var(--card-bg); border: 1px solid var(--border);
+            color: var(--text-main); padding: 7px 12px; border-radius: 20px;
+            cursor: pointer; font-size: 0.82rem; display: flex; align-items: center; gap: 5px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: border-color 0.2s;
+        }
+
+        .btn-toggle:hover { border-color: var(--accent); }
+
+        .hero {
+            text-align: center; padding: 30px 20px 10px 20px;
+            max-width: 750px; margin: 0 auto; position: relative; z-index: 10;
+        }
+
+        .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; }
+        .hero p { font-size: 1.05rem; color: var(--text-muted); line-height: 1.5; }
+
+        .container {
+            max-width: 1100px; margin: 0 auto; padding: 0 20px;
+            position: relative; z-index: 10;
+        }
+
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px; margin-top: 25px;
+        }
+
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;
+            transition: transform 0.25s, box-shadow 0.25s; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+
+        .img-wrapper {
+            width: 100%; height: 240px; background: #f5f5f4;
+            position: relative; overflow: hidden;
+        }
+
+        .img-wrapper img, .img-wrapper video {
+            width: 100%; height: 100%; object-fit: cover; cursor: pointer;
+        }
+
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.85); border: none; width: 30px; height: 30px;
+            border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; z-index: 5;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .nav-prev { left: 8px; }
+        .nav-next { right: 8px; }
+
+        .badge {
+            position: absolute; top: 12px; left: 12px;
+            background: rgba(28, 25, 23, 0.85); color: #fff;
+            padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;
+            font-weight: 600; backdrop-filter: blur(4px); z-index: 4;
+        }
+
+        .card-content {
+            padding: 20px; display: flex; flex-direction: column;
+            flex-grow: 1; justify-content: space-between;
+        }
+
+        .card h3 { font-size: 1.15rem; margin-bottom: 6px; cursor: pointer; transition: color 0.2s; }
+        .card h3:hover { color: var(--accent); }
+        .card p.desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.45; }
+
+        .card-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: auto; border-top: 1px solid var(--border); padding-top: 15px;
+        }
+
+        .price { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+
+        .btn-order {
+            background: var(--accent); color: white; border: none;
+            padding: 9px 15px; border-radius: 10px; cursor: pointer;
+            font-weight: 600; font-size: 0.85rem; transition: background 0.2s;
+        }
+
+        .btn-order:hover { background: var(--accent-hover); }
+
+        /* Widok Szczegółów Podstrony */
+        .product-detail-view {
+            display: none; margin-top: 25px; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: 20px; padding: 35px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .btn-back {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-muted); padding: 10px 18px; border-radius: 10px;
+            cursor: pointer; font-weight: 600; margin-bottom: 25px;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+
+        .btn-back:hover { color: var(--text-main); border-color: var(--accent); }
+
+        .detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        @media (max-width: 768px) { .detail-layout { grid-template-columns: 1fr; } }
+
+        .detail-media-box { display: flex; flex-direction: column; gap: 12px; }
+
+        .detail-img-wrapper {
+            width: 100%; max-height: 420px; border-radius: 14px;
+            overflow: hidden; background: #f5f5f4;
+        }
+
+        .detail-img-wrapper img, .detail-img-wrapper video { width: 100%; height: 100%; object-fit: cover; }
+
+        .detail-thumbnails { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .thumbnail {
+            width: 65px; height: 65px; border-radius: 8px; overflow: hidden;
+            border: 2px solid transparent; cursor: pointer; opacity: 0.6; transition: all 0.2s;
+        }
+        .thumbnail.active, .thumbnail:hover { opacity: 1; border-color: var(--accent); }
+        .thumbnail img, .thumbnail video { width: 100%; height: 100%; object-fit: cover; }
+
+        .detail-info h1 { font-size: 2.1rem; margin-bottom: 10px; }
+        .detail-price { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 20px; }
+        .detail-full-desc { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 25px; }
+
+        .features-list { list-style: none; margin-bottom: 25px; }
+        .features-list li { font-size: 0.9rem; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+
+        .contact-box {
+            background: #fafaf9; border: 1px solid var(--border);
+            padding: 22px; border-radius: 14px;
+        }
+
+        .contact-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+
+        .btn-contact-action {
+            background: var(--text-main); color: #fff; padding: 11px 18px;
+            border-radius: 10px; text-decoration: none; font-weight: 600;
+            font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;
+        }
+
+        footer { text-align: center; margin-top: 50px; font-size: 0.85rem; color: var(--text-muted); }
+    </style>
+</head>
+<body class="led-on">
+
+    <canvas id="snow-canvas"></canvas>
+
+    <div class="led-wire">
+        <div class="light red"></div><div class="light gold"></div><div class="light green"></div><div class="light blue"></div>
+        <div class="light red"></div><div class="light gold"></div><div class="light green"></div><div class="light blue"></div>
+        <div class="light red"></div><div class="light gold"></div><div class="light green"></div><div class="light blue"></div>
+        <div class="light red"></div><div class="light gold"></div><div class="light green"></div><div class="light blue"></div>
+    </div>
+
+    <header>
+        <div class="logo" onclick="showCatalog()">Magia<span>Świat</span></div>
+        <div class="nav-controls">
+            <button class="btn-toggle" onclick="toggleSnow()">❄️ Śnieg: ON</button>
+            <button class="btn-toggle" onclick="toggleLED()">💡 Lampki: ON</button>
+        </div>
+    </header>
+
+    <div class="hero" id="hero-banner">
+        <h1>Katalog Oświetlenia i Dekoracji LED</h1>
+        <p>Wybierz dekorację i zadzwoń lub wyślij SMS, aby natychmiast złożyć zamówienie!</p>
+    </div>
+
+    <div class="container">
+        <!-- Widok Główny Katalogu -->
+        <div class="grid" id="products-grid"></div>
+
+        <!-- Widok Szczegółów Produktu -->
+        <div class="product-detail-view" id="product-detail">
+            <button class="btn-back" onclick="showCatalog()">← Wróć do katalogu</button>
+            <div class="detail-layout">
+                <div class="detail-media-box">
+                    <div class="detail-img-wrapper" id="detail-media-container"></div>
+                    <div class="detail-thumbnails" id="detail-thumbnails"></div>
+                </div>
+                <div class="detail-info">
+                    <h1 id="detail-title">Nazwa Produktu</h1>
+                    <div class="detail-price" id="detail-price">0,00 zł</div>
+                    <p class="detail-full-desc" id="detail-desc">Pełny opis...</p>
+                    
+                    <ul class="features-list" id="detail-features"></ul>
+
+                    <div class="contact-box">
+                        <h4>Złóż zamówienie telefonicznie lub SMS-em:</h4>
+                        <div class="contact-buttons">
+                            <a href="tel:123456789" class="btn-contact-action">📞 Zadzwoń teraz</a>
+                            <a href="sms:123456789" class="btn-contact-action" style="background: var(--accent);">💬 Wyślij SMS</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            © 2026 MagiaŚwiąt. Szybka wysyłka i gwarancja jakości. Telefon: +48 123 456 789
+        </footer>
+    </div>
+
+    <script>
+        // Aktualna baza 3 dodanych produktów:
+        const products = [
+            {
+                id: 1,
+                name: "Duża Bordowa Kokarda Welur",
+                badge: "Premium / Nowość",
+                price: 45.00,
+                shortDesc: "Imponujący rozmiar 100x30 cm. Mięsisty, elegancki welur w głębokim bordowym kolorze.",
+                fullDesc: "Wyjątkowo efektowna, duża kokarda wykonana z luksusowego, przyjemnego w dotyku materiału welurowego. Doskonale sprawdzi się jako ozdoba na drzwi wejściowe, kominek lub jako spektakularny element dekoracyjny.",
+                media: [
+                    { type: 'img', src: '900924484_3297094317167960_8542897501399226924_n_2.jpg' },
+                    { type: 'img', src: '901839798_3297094353834623_3437456323086317266_n_2.jpg' },
+                    { type: 'img', src: '897810712_3297094277167964_8110306475196066953_n_2.jpg' }
+                ],
+                features: [
+                    "📐 Wymiary: 100 x 30 cm",
+                    "🎀 Wysokiej jakości materiał welurowy",
+                    "🔴 Elegancki, głęboki odcień bordowego",
+                    "🏠 Idealna na drzwi, ściany lub jako dekoracja wnętrz"
+                ]
+            },
+            {
+                id: 2,
+                name: "Ozdoba Świąteczna LED w Kloszu",
+                badge: "Gotowy Prezent",
+                price: 25.00,
+                shortDesc: "Przeźroczysta kopuła 22x10 cm z ośnieżoną choinką, Mikołajem i światełkami LED. Zapakowana w eleganckie pudełko.",
+                fullDesc: "Niezwykle urokliwa dekoracja świąteczna w przezroczystej kopule. Wewnątrz znajduje się estetycznie wykonana miniaturowa choinka oplątana drucikami LED, postać Świętego Mikołaja oraz delikatne kuleczki przypominające śnieg. Całość zasilana jest bateryjnie i zapakowana w eleganckie pudełko – idealny, gotowy prezent!",
+                media: [
+                    { type: 'img', src: '903196760_122529998396180516_6901805652385936406_n_3.jpg' },
+                    { type: 'img', src: '901920684_122529998576180516_3774913937115775954_n_2.jpg' },
+                    { type: 'img', src: '902046095_122529998480180516_722932034237289984_n_3.jpg' }
+                ],
+                features: [
+                    "📐 Wymiary: 22 cm wysokości x 10 cm średnicy",
+                    "🔋 Podświetlenie LED zasilane na baterie (brak plączących się kabli)",
+                    "🎁 Zapakowane w eleganckie pudełko ozdobne",
+                    "✨ Płynne przesuwanie zdjęć w galerii"
+                ]
+            },
+            {
+                id: 3,
+                name: "Gwiazda LED na Czubek Choinki",
+                badge: "Bestseller",
+                price: 20.00,
+                shortDesc: "Krystaliczna gwiazda o wymiarach 20x20 cm zasilana na prąd. Idealne zwieńczenie choinki.",
+                fullDesc: "Efektowna, trójwymiarowa gwiazda na czubek choinki wykonana z krystalicznego materiału pięknie rozpraszającego światło. Zapewnia magiczny blask i stabilnie mocuje się na szczycie drzewka.",
+                media: [
+                    { type: 'img', src: '901919901_122529955826180516_8362161582932027812_n_2.jpg' },
+                    { type: 'img', src: '902019348_122529955754180516_4263836274605534147_n_2.jpg' }
+                ],
+                features: [
+                    "⭐ Wymiary: 20 x 20 cm",
+                    "⚡ Zasilanie na prąd (stabilne i jasne świecenie)",
+                    "🎨 Dostępne kolory: Biały zimny, Multikolor",
+                    "🌲 Łatwy i bezpieczny montaż na czubku choinki"
+                ]
+            }
+        ];
+
+        const currentMediaIndex = {};
+
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = products.map(p => {
+                if(currentMediaIndex[p.id] === undefined) currentMediaIndex[p.id] = 0;
+                
+                const hasMultiple = p.media && p.media.length > 1;
+                const currentFile = p.media[currentMediaIndex[p.id]];
+
+                return `
+                <div class="card">
+                    <div class="img-wrapper">
+                        ${p.badge ? `<span class="badge">${p.badge}</span>` : ''}
+                        
+                        ${hasMultiple ? `<button class="nav-arrow nav-prev" onclick="prevMedia(${p.id}, event)">‹</button>` : ''}
+                        
+                        ${currentFile.type === 'video' 
+                            ? `<video id="card-media-${p.id}" src="${currentFile.src}" autoplay loop muted onclick="openProductDetail(${p.id})"></video>`
+                            : `<img id="card-media-${p.id}" src="${currentFile.src}" alt="${p.name}" onclick="openProductDetail(${p.id})">`
+                        }
+                        
+                        ${hasMultiple ? `<button class="nav-arrow nav-next" onclick="nextMedia(${p.id}, event)">›</button>` : ''}
+                    </div>
+                    <div class="card-content">
+                        <h3 onclick="openProductDetail(${p.id})">${p.name}</h3>
+                        <p class="desc">${p.shortDesc}</p>
+                        <div class="card-footer">
+                            <div class="price">${p.price.toFixed(2).replace('.', ',')} zł</div>
+                            <button class="btn-order" onclick="openProductDetail(${p.id})">Zobacz / Zamów</button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function prevMedia(productId, e) {
+            e.stopPropagation();
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            currentMediaIndex[productId] = (currentMediaIndex[productId] - 1 + product.media.length) % product.media.length;
+            updateCardMedia(product);
+        }
+
+        function nextMedia(productId, e) {
+            e.stopPropagation();
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            currentMediaIndex[productId] = (currentMediaIndex[productId] + 1) % product.media.length;
+            updateCardMedia(product);
+        }
+
+        function updateCardMedia(product) {
+            const container = document.getElementById(`card-media-${product.id}`).parentElement;
+            const currentFile = product.media[currentMediaIndex[product.id]];
+            
+            const oldMedia = document.getElementById(`card-media-${product.id}`);
+            if (oldMedia) oldMedia.remove();
+
+            if (currentFile.type === 'video') {
+                container.insertAdjacentHTML('beforeend', `<video id="card-media-${product.id}" src="${currentFile.src}" autoplay loop muted onclick="openProductDetail(${product.id})"></video>`);
+            } else {
+                container.insertAdjacentHTML('beforeend', `<img id="card-media-${product.id}" src="${currentFile.src}" alt="${product.name}" onclick="openProductDetail(${product.id})">`);
+            }
+        }
+
+        function openProductDetail(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            const mediaContainer = document.getElementById('detail-media-container');
+            const firstFile = product.media[0];
+            
+            if (firstFile.type === 'video') {
+                mediaContainer.innerHTML = `<video src="${firstFile.src}" controls autoplay loop></video>`;
+            } else {
+                mediaContainer.innerHTML = `<img src="${firstFile.src}" alt="${product.name}">`;
+            }
+
+            document.getElementById('detail-title').innerText = product.name;
+            document.getElementById('detail-price').innerText = `${product.price.toFixed(2).replace('.', ',')} zł`;
+            document.getElementById('detail-desc').innerText = product.fullDesc;
+
+            const featuresList = document.getElementById('detail-features');
+            featuresList.innerHTML = product.features.map(f => `<li>${f}</li>`).join('');
+
+            const thumbsContainer = document.getElementById('detail-thumbnails');
+            if (product.media.length > 1) {
+                thumbsContainer.style.display = 'flex';
+                thumbsContainer.innerHTML = product.media.map((m, i) => `
+                    <div class="thumbnail ${i === 0 ? 'active' : ''}" onclick="setDetailMedia('${m.src}', '${m.type}', this)">
+                        ${m.type === 'video' 
+                            ? `<video src="${m.src}"></video>` 
+                            : `<img src="${m.src}" alt="Miniaturka">`
+                        }
+                    </div>
+                `).join('');
+            } else {
+                thumbsContainer.style.display = 'none';
+            }
+
+            document.getElementById('hero-banner').style.display = 'none';
+            document.getElementById('products-grid').style.display = 'none';
+            document.getElementById('product-detail').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setDetailMedia(src, type, element) {
+            const mediaContainer = document.getElementById('detail-media-container');
+            if (type === 'video') {
+                mediaContainer.innerHTML = `<video src="${src}" controls autoplay loop></video>`;
+            } else {
+                mediaContainer.innerHTML = `<img src="${src}" alt="Zdjęcie">`;
+            }
+            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function showCatalog() {
+            document.getElementById('product-detail').style.display = 'none';
+            document.getElementById('hero-banner').style.display = 'block';
+            document.getElementById('products-grid').style.display = 'grid';
+        }
+
+        let snowActive = true;
+        const canvas = document.getElementById('snow-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const flakes = Array.from({ length: 45 }, () => ({
+            x: Math.random() * width, y: Math.random() * height,
+            r: Math.random() * 3 + 1, d: Math.random() * 1 + 0.5
+        }));
+
+        function drawSnow() {
+            ctx.clearRect(0, 0, width, height);
+            if (!snowActive) return requestAnimationFrame(drawSnow);
+            
+            ctx.fillStyle = 'rgba(217, 119, 6, 0.2)';
+            ctx.beginPath();
+            for (let f of flakes) {
+                ctx.moveTo(f.x, f.y); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true);
+            }
+            ctx.fill();
+
+            for (let f of flakes) {
+                f.y += f.d; f.x += Math.sin(f.y / 20) * 0.5;
+                if (f.y > height) { f.y = -10; f.x = Math.random() * width; }
+            }
+            requestAnimationFrame(drawSnow);
+        }
+
+        function toggleSnow() {
+            snowActive = !snowActive;
+            event.target.innerText = snowActive ? '❄️ Śnieg: ON' : '❄️ Śnieg: OFF';
+            if(!snowActive) ctx.clearRect(0, 0, width, height);
+        }
+
+        function toggleLED() {
+            document.body.classList.toggle('led-on');
+            const isLedOn = document.body.classList.contains('led-on');
+            event.target.innerText = isLedOn ? '💡 Lampki: ON' : '🔌 Lampki: OFF';
+        }
+
+        renderProducts();
+        drawSnow();
+    </script>
+</body>
+</html>
